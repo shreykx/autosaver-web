@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="flex items-center justify-center min-h-screen">
+    <div id="drop-area" class="w-64 h-64 flex items-center justify-center">
+        Drop image here
+    </div>
+    <script>
+        const dropArea = document.getElementById('drop-area');
+
+        dropArea.addEventListener('dragover', (event) => {
+            event.preventDefault();
+            dropArea.classList.add('bg-gray-200');
+        });
+
+        dropArea.addEventListener('dragleave', () => {
+            dropArea.classList.remove('bg-gray-200');
+        });
+
+        dropArea.addEventListener('drop', (event) => {
+            event.preventDefault();
+            dropArea.classList.remove('bg-gray-200');
+
+            const files = event.dataTransfer.files;
+            if (files.length > 0) {
+                const file = files[0];
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        dropArea.innerHTML = '';
+                        dropArea.appendChild(img);
+                    };
+                    reader.readAsDataURL(file);
+                    console.log(file.name);
+                    console.log(`File size is ${(file.size) / 1024}MB`);
+                    const formData = new FormData();
+                    formData.append('image', file);
+                    fetch('/upload/img', {
+                        method: 'POST',
+                        body: formData
+                    })
+                        .then(response => response.json())
+                        .then((data) => {
+                            console.log('Upload successful:', data);
+                            const img = document.createElement('img');
+                            img.src = URL.createObjectURL(file);
+                            dropArea.innerHTML = '';
+                            dropArea.appendChild(img);
+                        })
+                        .catch(error => {
+                            console.error('Error uploading image:', error);
+                            alert('Error uploading image.');
+                        });
+                } else {
+                    alert('Please drop an image file.');
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>
